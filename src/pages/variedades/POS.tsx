@@ -121,7 +121,7 @@ export default function POS() {
               </button>
 
               <p className="text-sm font-semibold text-gray-500 mb-3">
-                {CATEGORIES.find(c => c.label === selectedCategory)?.icon} {selectedCategory}
+                {selectedCategory}
               </p>
 
               {productsInCategory.length === 0 ? (

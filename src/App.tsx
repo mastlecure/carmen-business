@@ -13,7 +13,14 @@ import Services from './pages/salon/Services'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth()
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-gray-400">Cargando...</div>
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <div className="text-4xl mb-3">🌸</div>
+        <p className="text-gray-400">Cargando...</p>
+      </div>
+    </div>
+  )
   if (!session) return <Navigate to="/login" replace />
   return <>{children}</>
 }

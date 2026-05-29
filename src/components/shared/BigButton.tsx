@@ -1,36 +1,40 @@
+import { ReactNode } from 'react'
+
 interface BigButtonProps {
-  icon: string
+  icon: ReactNode
   label: string
   onClick: () => void
   color?: 'pink' | 'purple' | 'amber' | 'green' | 'red' | 'gray'
   disabled?: boolean
 }
 
-const colors = {
-  pink:   'bg-carmen-500 hover:bg-carmen-600 text-white',
-  purple: 'bg-salon-500 hover:bg-salon-600 text-white',
-  amber:  'bg-store-500 hover:bg-store-600 text-white',
-  green:  'bg-green-500 hover:bg-green-600 text-white',
-  red:    'bg-red-500 hover:bg-red-600 text-white',
-  gray:   'bg-gray-200 hover:bg-gray-300 text-gray-800',
+const styles: Record<string, { border: string; icon: string }> = {
+  pink:   { border: 'border-l-4 border-l-pink-500',   icon: 'text-pink-500' },
+  purple: { border: 'border-l-4 border-l-violet-500', icon: 'text-violet-500' },
+  amber:  { border: 'border-l-4 border-l-amber-500',  icon: 'text-amber-500' },
+  green:  { border: 'border-l-4 border-l-green-500',  icon: 'text-green-600' },
+  red:    { border: 'border-l-4 border-l-red-500',    icon: 'text-red-500' },
+  gray:   { border: 'border-l-4 border-l-gray-400',   icon: 'text-gray-500' },
 }
 
 export default function BigButton({ icon, label, onClick, color = 'pink', disabled }: BigButtonProps) {
+  const s = styles[color]
   return (
     <button
       onClick={onClick}
       disabled={disabled}
       className={`
-        ${colors[color]}
-        flex flex-col items-center justify-center gap-2
-        w-full rounded-3xl py-6 px-4
-        text-center font-bold text-lg
-        shadow-md active:scale-95 transition-transform
+        bg-white ${s.border}
+        flex flex-col items-center justify-center gap-3
+        w-full rounded-2xl py-6 px-4
+        text-center font-semibold text-gray-800 text-base
+        shadow-sm border border-gray-100
+        active:scale-95 transition-transform
         disabled:opacity-40 disabled:cursor-not-allowed
-        min-h-[120px]
+        min-h-[110px]
       `}
     >
-      <span className="text-4xl">{icon}</span>
+      <span className={s.icon}>{icon}</span>
       <span>{label}</span>
     </button>
   )

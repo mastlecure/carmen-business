@@ -1,19 +1,19 @@
 import { useState } from 'react'
-import { Minus, Plus, ShoppingCart, Trash2, CheckCircle, ArrowLeft } from 'lucide-react'
+import { Minus, Plus, ShoppingCart, Trash2, CheckCircle, ArrowLeft, Tag, ShoppingBag, Package, Coffee, Star, Sparkles, Gift, Box, type LucideIcon } from 'lucide-react'
 import Layout from '../../components/shared/Layout'
 import { useInventory } from '../../hooks/useInventory'
 import { useSales } from '../../hooks/useSales'
 import type { CartItem, Product } from '../../types'
 
-const CATEGORIES = [
-  { label: 'Ropa', icon: '👕' },
-  { label: 'Bolsos y Mochilas', icon: '👜' },
-  { label: 'Zapatos', icon: '👟' },
-  { label: 'Bebidas', icon: '🥤' },
-  { label: 'Accesorios', icon: '💍' },
-  { label: 'Cosméticos', icon: '💄' },
-  { label: 'Chiverias', icon: '🎁' },
-  { label: 'Otros', icon: '📦' },
+const CATEGORIES: { label: string; icon: LucideIcon }[] = [
+  { label: 'Ropa',           icon: Tag },
+  { label: 'Bolsos y Mochilas', icon: ShoppingBag },
+  { label: 'Zapatos',        icon: Package },
+  { label: 'Bebidas',        icon: Coffee },
+  { label: 'Accesorios',     icon: Star },
+  { label: 'Cosméticos',     icon: Sparkles },
+  { label: 'Chiverias',      icon: Gift },
+  { label: 'Otros',          icon: Box },
 ]
 
 export default function POS() {
@@ -98,9 +98,9 @@ export default function POS() {
                       key={cat.label}
                       onClick={() => setSelectedCategory(cat.label)}
                       disabled={count === 0}
-                      className="bg-white rounded-3xl py-5 px-4 flex flex-col items-center gap-2 shadow-sm border-2 border-transparent active:scale-95 transition-transform disabled:opacity-40 hover:border-carmen-300"
+                      className="bg-white rounded-2xl py-5 px-4 flex flex-col items-center gap-2 shadow-sm border border-gray-100 border-l-4 border-l-carmen-400 active:scale-95 transition-transform disabled:opacity-40"
                     >
-                      <span className="text-3xl">{cat.icon}</span>
+                      <cat.icon size={28} className="text-carmen-500" />
                       <span className="font-semibold text-gray-800 text-sm text-center">{cat.label}</span>
                       <span className="text-xs text-gray-400">{count} producto{count !== 1 ? 's' : ''}</span>
                     </button>

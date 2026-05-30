@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { TrendingUp, CalendarClock, AlertTriangle, ShoppingBag, Scissors, ChevronRight, Award } from 'lucide-react'
 import Layout from '../components/shared/Layout'
 import { supabase } from '../lib/supabase'
+import { localDate } from '../lib/date'
 import type { Appointment } from '../types'
 
 const STATUS_LABELS: Record<string, string> = {
@@ -41,10 +42,10 @@ export default function Dashboard() {
   const [loading, setLoading]         = useState(true)
 
   useEffect(() => {
-    const today = new Date().toISOString().split('T')[0]
+    const today = localDate()
     const sevenDaysAgo = new Date()
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6)
-    const startDate = sevenDaysAgo.toISOString().split('T')[0]
+    const startDate = localDate(sevenDaysAgo)
 
     Promise.all([
       supabase.from('cash_register').select('total_sales').eq('register_date', today),
@@ -62,7 +63,7 @@ export default function Dashboard() {
       const days: DayData[] = Array.from({ length: 7 }, (_, i) => {
         const d = new Date()
         d.setDate(d.getDate() - (6 - i))
-        const dateStr = d.toISOString().split('T')[0]
+        const dateStr = localDate(d)
         return {
           date: dateStr,
           label: d.toLocaleDateString('es-NI', { weekday: 'short' }),
@@ -139,7 +140,7 @@ export default function Dashboard() {
           <div className="flex items-end gap-1.5" style={{ height: '72px' }}>
             {weekData.map(day => {
               const heightPct = (day.total / maxWeek) * 100
-              const isToday = day.date === new Date().toISOString().split('T')[0]
+              const isToday = day.date === localDate()
               return (
                 <div key={day.date} className="flex-1 flex flex-col items-center gap-1">
                   <div className="w-full flex flex-col justify-end" style={{ height: '52px' }}>

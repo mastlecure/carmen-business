@@ -6,6 +6,7 @@ import ConfirmDialog from '../../components/shared/ConfirmDialog'
 import { useAppointments } from '../../hooks/useAppointments'
 import { useClients } from '../../hooks/useClients'
 import { useServices } from '../../hooks/useServices'
+import { localDate } from '../../lib/date'
 import type { AppointmentStatus } from '../../types'
 
 const STATUS_COLORS: Record<AppointmentStatus, string> = {
@@ -24,7 +25,7 @@ function AppointmentForm({ onSubmit, onCancel }: { onSubmit: (a: any) => Promise
   const { services } = useServices()
   const [clientId, setClientId] = useState('')
   const [serviceId, setServiceId] = useState('')
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0])
+  const [date, setDate] = useState(localDate())
   const [time, setTime] = useState('09:00')
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
@@ -94,7 +95,7 @@ function AppointmentForm({ onSubmit, onCancel }: { onSubmit: (a: any) => Promise
 }
 
 export default function Appointments() {
-  const today = new Date().toISOString().split('T')[0]
+  const today = localDate()
   const [selectedDate, setSelectedDate] = useState(today)
   const { appointments, loading, addAppointment, updateStatus, deleteAppointment } = useAppointments(selectedDate)
   const [showAdd, setShowAdd] = useState(false)

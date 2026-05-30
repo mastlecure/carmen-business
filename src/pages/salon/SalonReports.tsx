@@ -3,6 +3,7 @@ import { TrendingUp, FileDown, CheckCircle } from 'lucide-react'
 import Layout from '../../components/shared/Layout'
 import { supabase } from '../../lib/supabase'
 import { exportAppointmentsToExcel } from '../../lib/excel'
+import { localDate } from '../../lib/date'
 import type { Appointment } from '../../types'
 
 interface DayData { date: string; label: string; income: number; count: number }
@@ -15,10 +16,10 @@ export default function SalonReports() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const today = new Date().toISOString().split('T')[0]
+    const today = localDate()
     const sevenDaysAgo = new Date()
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6)
-    const startDate = sevenDaysAgo.toISOString().split('T')[0]
+    const startDate = localDate(sevenDaysAgo)
 
     Promise.all([
       supabase.from('appointments').select('*').eq('status', 'done').gte('appointment_date', startDate).order('appointment_date', { ascending: false }),
@@ -34,7 +35,7 @@ export default function SalonReports() {
       const days: DayData[] = Array.from({ length: 7 }, (_, i) => {
         const d = new Date()
         d.setDate(d.getDate() - (6 - i))
-        const dateStr = d.toISOString().split('T')[0]
+        const dateStr = localDate(d)
         const dayAppts = all.filter(a => a.appointment_date === dateStr)
         return {
           date: dateStr,
@@ -76,7 +77,7 @@ export default function SalonReports() {
           <div className="flex items-end gap-1.5 h-20">
             {weekData.map(day => {
               const heightPct = maxIncome > 0 ? (day.income / maxIncome) * 100 : 0
-              const isToday = day.date === new Date().toISOString().split('T')[0]
+              const isToday = day.date === localDate()
               return (
                 <div key={day.date} className="flex-1 flex flex-col items-center gap-1.5">
                   <div className="w-full flex flex-col justify-end" style={{ height: '64px' }}>

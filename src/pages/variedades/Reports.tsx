@@ -3,6 +3,7 @@ import { FileDown, TrendingUp, History } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import Layout from '../../components/shared/Layout'
 import { useInventory } from '../../hooks/useInventory'
+import { localDate } from '../../lib/date'
 import { supabase } from '../../lib/supabase'
 import { exportInventoryToExcel, exportSalesToExcel } from '../../lib/excel'
 import type { Sale } from '../../types'
@@ -15,7 +16,7 @@ export default function Reports() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const today = new Date().toISOString().split('T')[0]
+    const today = localDate()
     Promise.all([
       supabase.from('sales').select('*').eq('business', 'variedades').order('created_at', { ascending: false }).limit(20),
       supabase.from('cash_register').select('*').eq('business', 'variedades').eq('register_date', today).single(),

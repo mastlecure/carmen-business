@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { localDate } from '../lib/date'
 import type { CartItem, Business } from '../types'
 
 export function useSales() {
@@ -32,7 +33,7 @@ export function useSales() {
       await supabase.from('products').update({ stock: newStock }).eq('id', item.product.id)
     }
 
-    const today = new Date().toISOString().split('T')[0]
+    const today = localDate()
     const { data: existing } = await supabase
       .from('cash_register')
       .select()

@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx'
+import { localDate } from './date'
 import type { Product, Sale, Appointment } from '../types'
 
 export function exportInventoryToExcel(products: Product[], filename = 'inventario') {
@@ -14,7 +15,7 @@ export function exportInventoryToExcel(products: Product[], filename = 'inventar
   const ws = XLSX.utils.json_to_sheet(data)
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, 'Inventario')
-  XLSX.writeFile(wb, `${filename}-${new Date().toISOString().split('T')[0]}.xlsx`)
+  XLSX.writeFile(wb, `${filename}-${localDate()}.xlsx`)
 }
 
 export function exportSalesToExcel(sales: Sale[], filename = 'ventas') {
@@ -27,7 +28,7 @@ export function exportSalesToExcel(sales: Sale[], filename = 'ventas') {
   const ws = XLSX.utils.json_to_sheet(data)
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, 'Ventas')
-  XLSX.writeFile(wb, `${filename}-${new Date().toISOString().split('T')[0]}.xlsx`)
+  XLSX.writeFile(wb, `${filename}-${localDate()}.xlsx`)
 }
 
 export function exportAppointmentsToExcel(appointments: Appointment[], filename = 'citas-salon') {
@@ -43,5 +44,5 @@ export function exportAppointmentsToExcel(appointments: Appointment[], filename 
   const ws = XLSX.utils.json_to_sheet(data)
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, 'Citas')
-  XLSX.writeFile(wb, `${filename}-${new Date().toISOString().split('T')[0]}.xlsx`)
+  XLSX.writeFile(wb, `${filename}-${localDate()}.xlsx`)
 }

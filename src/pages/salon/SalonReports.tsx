@@ -6,7 +6,7 @@ import { exportAppointmentsToExcel } from '../../lib/excel'
 import { localDate } from '../../lib/date'
 import type { Appointment } from '../../types'
 
-interface DayData { date: string; label: string; income: number; count: number }
+interface DayData { date: string; label: string; income: number; count: number; isFuture: boolean }
 
 export default function SalonReports() {
   const [todayIncome, setTodayIncome]   = useState(0)
@@ -18,9 +18,14 @@ export default function SalonReports() {
 
   useEffect(() => {
     const today = localDate()
-    const sevenDaysAgo = new Date()
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6)
-    const startDate = localDate(sevenDaysAgo)
+    // Semana actual Lun-Dom
+    const now = new Date()
+    const dow = now.getDay()
+    const daysFromMonday = dow === 0 ? 6 : dow - 1
+    const monday = new Date(now)
+    monday.setDate(now.getDate() - daysFromMonday)
+    monday.setHours(0, 0, 0, 0)
+    const startDate = localDate(monday)
 
     supabase
       .from('appointments')
@@ -36,15 +41,16 @@ export default function SalonReports() {
         setTodayCount(todayDone.length)
 
         const days: DayData[] = Array.from({ length: 7 }, (_, i) => {
-          const d = new Date()
-          d.setDate(d.getDate() - (6 - i))
+          const d = new Date(monday)
+          d.setDate(monday.getDate() + i)
           const dateStr = localDate(d)
           const dayAppts = all.filter(a => a.appointment_date === dateStr)
           return {
-            date: dateStr,
-            label: d.toLocaleDateString('es-NI', { weekday: 'short' }),
-            income: dayAppts.reduce((s, a) => s + a.service_price, 0),
-            count: dayAppts.length,
+            date:     dateStr,
+            label:    d.toLocaleDateString('es-NI', { weekday: 'short' }),
+            income:   dayAppts.reduce((s, a) => s + a.service_price, 0),
+            count:    dayAppts.length,
+            isFuture: dateStr > today,
           }
         })
         setWeekData(days)
@@ -86,36 +92,41 @@ export default function SalonReports() {
           <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
             Ingresos — toca un día para ver detalles
           </p>
-          <div className="flex items-end gap-1.5" style={{ height: '72px' }}>
+          <div className="flex gap-1">
             {weekData.map(day => {
-              const heightPct  = (day.income / maxIncome) * 100
+              const heightPct  = maxIncome > 0 ? (day.income / maxIncome) * 100 : 0
               const isToday    = day.date === today
               const isSelected = day.date === selectedDate
               const hasData    = day.income > 0
               return (
                 <button
                   key={day.date}
-                  onClick={() => setSelectedDate(isSelected ? null : day.date)}
-                  className={`flex-1 flex flex-col items-center gap-1 ${hasData ? 'active:opacity-70' : 'cursor-default'}`}
+                  onClick={() => hasData && setSelectedDate(isSelected ? null : day.date)}
+                  disabled={!hasData}
+                  className="flex-1 flex flex-col items-end gap-1.5 pb-1 pt-2 px-0.5 rounded-xl active:bg-gray-100 transition-colors disabled:cursor-default"
+                  style={{ minHeight: '88px' }}
                 >
-                  <div className="w-full flex flex-col justify-end" style={{ height: '52px' }}>
+                  <div className="w-full flex flex-col justify-end flex-1">
                     <div
-                      className="w-full rounded-t-md transition-all"
+                      className="w-full rounded-t-md"
                       style={{
-                        height: hasData ? `${Math.max(heightPct, 8)}%` : '3px',
-                        background: isSelected
-                          ? 'linear-gradient(180deg, #b594e4, #7B5EA7)'
-                          : isToday
-                            ? 'linear-gradient(180deg, #9b78d4, #7B5EA7)'
-                            : hasData
-                              ? 'linear-gradient(180deg, #D0C4B8, #B0A095)'
-                              : '#E8DDD4',
+                        height: hasData ? `${Math.max(heightPct, 12)}%` : '2px',
+                        minHeight: hasData ? '6px' : undefined,
+                        background: day.isFuture
+                          ? '#E8DDD4'
+                          : isSelected
+                            ? 'linear-gradient(180deg, #b594e4, #7B5EA7)'
+                            : isToday
+                              ? 'linear-gradient(180deg, #9b78d4, #7B5EA7)'
+                              : hasData
+                                ? 'linear-gradient(180deg, #D0C4B8, #B0A095)'
+                                : '#E8DDD4',
                       }}
                     />
                   </div>
-                  <span className={`text-[9px] capitalize font-medium ${
-                    isSelected ? 'text-salon-600 font-bold' :
-                    isToday    ? 'text-salon-600 font-bold' : 'text-gray-400'
+                  <span className={`text-[10px] capitalize font-medium w-full text-center ${
+                    isSelected || isToday ? 'text-salon-600 font-bold' :
+                    day.isFuture ? 'text-gray-200' : 'text-gray-400'
                   }`}>
                     {day.label.replace('.', '')}
                   </span>

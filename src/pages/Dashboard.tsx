@@ -17,7 +17,7 @@ const STATUS_COLORS: Record<string, string> = {
   cancelled: 'text-red-600 bg-red-50 border border-red-100',
 }
 
-interface DayData    { date: string; label: string; total: number }
+interface DayData    { date: string; label: string; total: number; isFuture: boolean }
 interface TopProduct { name: string; revenue: number; qty: number }
 
 function StatCard({ icon, label, value, bg, iconColor, valueColor }:
@@ -44,10 +44,16 @@ export default function Dashboard() {
 
   useEffect(() => {
     const today = localDate()
-    // Para el chart semanal: leer de sales.created_at y agrupar por fecha LOCAL
-    // Esto evita el bug de registros con fecha UTC en cash_register
-    const eightDaysAgo = new Date()
-    eightDaysAgo.setDate(eightDaysAgo.getDate() - 7)
+    // Semana actual Lun-Dom (semana natural Nicaragua)
+    const now = new Date()
+    const dow = now.getDay() // 0=Dom, 1=Lun, ..., 6=Sáb
+    const daysFromMonday = dow === 0 ? 6 : dow - 1
+    const monday = new Date(now)
+    monday.setDate(now.getDate() - daysFromMonday)
+    monday.setHours(0, 0, 0, 0)
+    // Buffer de 1 día para cubrir timezone al consultar UTC
+    const eightDaysAgo = new Date(monday)
+    eightDaysAgo.setDate(monday.getDate() - 1)
 
     Promise.all([
       supabase.from('cash_register').select('total_sales').eq('register_date', today),
@@ -66,14 +72,17 @@ export default function Dashboard() {
         const ld = localDate(new Date(s.created_at))
         dayMap[ld] = (dayMap[ld] ?? 0) + s.total
       })
+      // Semana actual Lun-Dom
+      const todayStr = localDate()
       const days: DayData[] = Array.from({ length: 7 }, (_, i) => {
-        const d = new Date()
-        d.setDate(d.getDate() - (6 - i))
+        const d = new Date(monday)
+        d.setDate(monday.getDate() + i)
         const dateStr = localDate(d)
         return {
-          date: dateStr,
-          label: d.toLocaleDateString('es-NI', { weekday: 'short' }),
-          total: dayMap[dateStr] ?? 0,
+          date:     dateStr,
+          label:    d.toLocaleDateString('es-NI', { weekday: 'short' }),
+          total:    dayMap[dateStr] ?? 0,
+          isFuture: dateStr > todayStr,
         }
       })
       setWeekData(days)
@@ -144,31 +153,40 @@ export default function Dashboard() {
       {!loading && weekData.some(d => d.total > 0) && (
         <div className="bg-white rounded-2xl border border-gray-200 p-4 mb-4">
           <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Ventas — 7 días</p>
-          <div className="flex items-end gap-1.5" style={{ height: '72px' }}>
+          <div className="flex gap-1">
             {weekData.map(day => {
-              const heightPct = (day.total / maxWeek) * 100
-              const isToday = day.date === localDate()
-              const hasData = day.total > 0
+              const heightPct = maxWeek > 0 ? (day.total / maxWeek) * 100 : 0
+              const isToday   = day.date === localDate()
+              const hasData   = day.total > 0
               return (
                 <button
                   key={day.date}
                   onClick={() => hasData && navigate(`/variedades/historial?fecha=${day.date}`)}
-                  className={`flex-1 flex flex-col items-center gap-1 ${hasData ? 'active:opacity-70' : 'cursor-default'}`}
+                  disabled={!hasData}
+                  className="flex-1 flex flex-col items-end gap-1.5 pb-1 pt-2 px-0.5 rounded-xl active:bg-gray-100 transition-colors disabled:cursor-default"
+                  style={{ minHeight: '88px' }}
                 >
-                  <div className="w-full flex flex-col justify-end" style={{ height: '52px' }}>
+                  {/* Barra */}
+                  <div className="w-full flex flex-col justify-end flex-1">
                     <div
-                      className="w-full rounded-t-md transition-all"
+                      className="w-full rounded-t-md"
                       style={{
-                        height: hasData ? `${Math.max(heightPct, 8)}%` : '3px',
-                        background: isToday
-                          ? 'linear-gradient(180deg, #e97752, #C4614A)'
-                          : hasData
-                            ? 'linear-gradient(180deg, #D0C4B8, #B0A095)'
-                            : '#E8DDD4',
+                        height: hasData ? `${Math.max(heightPct, 12)}%` : '2px',
+                        minHeight: hasData ? '6px' : undefined,
+                        background: day.isFuture
+                          ? '#E8DDD4'
+                          : isToday
+                            ? 'linear-gradient(180deg, #e97752, #C4614A)'
+                            : hasData
+                              ? 'linear-gradient(180deg, #D0C4B8, #B0A095)'
+                              : '#E8DDD4',
                       }}
                     />
                   </div>
-                  <span className={`text-[9px] capitalize font-medium ${isToday ? 'text-carmen-600 font-bold' : 'text-gray-400'}`}>
+                  {/* Label */}
+                  <span className={`text-[10px] capitalize font-medium w-full text-center ${
+                    isToday ? 'text-carmen-600 font-bold' : day.isFuture ? 'text-gray-200' : 'text-gray-400'
+                  }`}>
                     {day.label.replace('.', '')}
                   </span>
                 </button>

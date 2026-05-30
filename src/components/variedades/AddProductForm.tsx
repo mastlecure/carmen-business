@@ -1,7 +1,8 @@
 import { useState, useRef } from 'react'
-import { ImagePlus, X } from 'lucide-react'
+import { ImagePlus, X, ScanLine } from 'lucide-react'
 import type { Product, Business } from '../../types'
 import { uploadProductImage } from '../../lib/storage'
+import BarcodeScanner from '../shared/BarcodeScanner'
 
 const CATEGORIES_VARIEDADES = ['Ropa', 'Bolsos y Mochilas', 'Zapatos', 'Bebidas', 'Accesorios', 'Cosméticos', 'Chiverias', 'Otros']
 const CATEGORIES_SALON = ['Tintes', 'Tratamientos', 'Shampoo', 'Acondicionador', 'Aceites', 'Herramientas', 'Otros']
@@ -21,6 +22,7 @@ export default function AddProductForm({ business, onSubmit, onCancel, initial }
   const [sellPrice, setSellPrice] = useState(initial?.sell_price?.toString() ?? '')
   const [stock, setStock] = useState(initial?.stock?.toString() ?? '0')
   const [barcode, setBarcode] = useState(initial?.barcode ?? '')
+  const [showScanner, setShowScanner] = useState(false)
   const [imageUrl, setImageUrl] = useState(initial?.image_url ?? '')
   const [imagePreview, setImagePreview] = useState(initial?.image_url ?? '')
   const [imageFile, setImageFile] = useState<File | null>(null)
@@ -63,6 +65,13 @@ export default function AddProductForm({ business, onSubmit, onCancel, initial }
   }
 
   return (
+    <>
+    {showScanner && (
+      <BarcodeScanner
+        onScan={(code) => { setBarcode(code); setShowScanner(false) }}
+        onClose={() => setShowScanner(false)}
+      />
+    )}
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* Foto */}
       <div>
@@ -122,13 +131,22 @@ export default function AddProductForm({ business, onSubmit, onCancel, initial }
 
       <div>
         <label className={labelClass}>Código de barras (opcional)</label>
-        <input
-          type="text"
-          value={barcode}
-          onChange={e => setBarcode(e.target.value)}
-          className={inputClass}
-          placeholder="Escanea o escribe el código"
-        />
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={barcode}
+            onChange={e => setBarcode(e.target.value)}
+            className={`${inputClass} flex-1`}
+            placeholder="Escanea o escribe el código"
+          />
+          <button
+            type="button"
+            onClick={() => setShowScanner(true)}
+            className="flex-shrink-0 w-14 bg-carmen-50 border-2 border-carmen-200 rounded-2xl flex items-center justify-center text-carmen-600 active:bg-carmen-100 transition-colors"
+          >
+            <ScanLine size={22} />
+          </button>
+        </div>
       </div>
 
       <div className="flex gap-3 pt-2">
@@ -140,5 +158,6 @@ export default function AddProductForm({ business, onSubmit, onCancel, initial }
         </button>
       </div>
     </form>
+    </>
   )
 }

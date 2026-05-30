@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
-import { Minus, Plus, ShoppingCart, Trash2, CheckCircle, ArrowLeft, Mic, MicOff, Scan, Tag, ShoppingBag, Package, Coffee, Star, Sparkles, Gift, Box, type LucideProps } from 'lucide-react'
+import { Minus, Plus, ShoppingCart, Trash2, CheckCircle, ArrowLeft, Mic, MicOff, Scan, Tag, ShoppingBag, Package, Coffee, Star, Sparkles, Gift, Box, Camera, type LucideProps } from 'lucide-react'
 import Layout from '../../components/shared/Layout'
+import BarcodeScanner from '../../components/shared/BarcodeScanner'
 import { useInventory } from '../../hooks/useInventory'
 import { useSales } from '../../hooks/useSales'
 import type { CartItem, Product } from '../../types'
@@ -30,6 +31,7 @@ export default function POS() {
   // Barcode
   const [barcodeInput, setBarcodeInput] = useState('')
   const [barcodeMsg, setBarcodeMsg] = useState('')
+  const [showScanner, setShowScanner] = useState(false)
   const barcodeRef = useRef<HTMLInputElement>(null)
 
   // Audio
@@ -78,14 +80,18 @@ export default function POS() {
   // Barcode scan
   const handleBarcodeKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && barcodeInput.trim()) {
-      const found = products.find(p => p.barcode === barcodeInput.trim() && p.stock > 0)
-      if (found) {
-        addToCart(found)
-        setBarcodeMsg(`✓ ${found.name} agregado`)
-      } else {
-        setBarcodeMsg('Producto no encontrado')
-      }
+      lookupBarcode(barcodeInput.trim())
       setBarcodeInput('')
+    }
+  }
+
+  const lookupBarcode = (code: string) => {
+    const found = products.find(p => p.barcode === code && p.stock > 0)
+    if (found) {
+      addToCart(found)
+      setBarcodeMsg(`✓ ${found.name} agregado`)
+    } else {
+      setBarcodeMsg('Producto no encontrado')
     }
   }
 
@@ -180,6 +186,18 @@ export default function POS() {
     }
   }
 
+  if (showScanner) {
+    return (
+      <BarcodeScanner
+        onScan={(code) => {
+          setShowScanner(false)
+          lookupBarcode(code)
+        }}
+        onClose={() => setShowScanner(false)}
+      />
+    )
+  }
+
   if (success) {
     return (
       <Layout title="Venta registrada" showBack backTo="/variedades">
@@ -204,17 +222,25 @@ export default function POS() {
         <>
           {/* Barcode scan */}
           <div className="mb-4">
-            <div className="flex gap-2 items-center bg-white border-2 border-gray-200 rounded-2xl px-4 py-3 focus-within:border-carmen-400 transition-colors">
-              <Scan size={18} className="text-gray-400 flex-shrink-0" />
-              <input
-                ref={barcodeRef}
-                type="text"
-                value={barcodeInput}
-                onChange={e => setBarcodeInput(e.target.value)}
-                onKeyDown={handleBarcodeKey}
-                placeholder="Escanear código de barras..."
-                className="flex-1 bg-transparent outline-none text-base"
-              />
+            <div className="flex gap-2">
+              <div className="flex-1 flex gap-2 items-center bg-white border-2 border-gray-200 rounded-2xl px-4 py-3 focus-within:border-carmen-400 transition-colors">
+                <Scan size={18} className="text-gray-400 flex-shrink-0" />
+                <input
+                  ref={barcodeRef}
+                  type="text"
+                  value={barcodeInput}
+                  onChange={e => setBarcodeInput(e.target.value)}
+                  onKeyDown={handleBarcodeKey}
+                  placeholder="Código de barras..."
+                  className="flex-1 bg-transparent outline-none text-base"
+                />
+              </div>
+              <button
+                onClick={() => setShowScanner(true)}
+                className="flex-shrink-0 w-14 bg-carmen-50 border-2 border-carmen-200 rounded-2xl flex items-center justify-center text-carmen-600 active:bg-carmen-100 transition-colors"
+              >
+                <Camera size={22} />
+              </button>
             </div>
             {barcodeMsg && (
               <p className={`text-sm mt-1.5 ml-1 font-medium ${barcodeMsg.startsWith('✓') ? 'text-green-600' : 'text-red-500'}`}>

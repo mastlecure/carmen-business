@@ -5,7 +5,7 @@ import Layout from '../components/shared/Layout'
 import AIAssistant from '../components/shared/AIAssistant'
 import { supabase } from '../lib/supabase'
 import { localDate } from '../lib/date'
-import type { Appointment } from '../types'
+import type { Appointment, Sale } from '../types'
 
 const STATUS_LABELS: Record<string, string> = {
   pending: 'Pendiente', confirmed: 'Confirmada', done: 'Realizada', cancelled: 'Cancelada',
@@ -44,23 +44,28 @@ export default function Dashboard() {
 
   useEffect(() => {
     const today = localDate()
-    const sevenDaysAgo = new Date()
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6)
-    const startDate = localDate(sevenDaysAgo)
+    // Para el chart semanal: leer de sales.created_at y agrupar por fecha LOCAL
+    // Esto evita el bug de registros con fecha UTC en cash_register
+    const eightDaysAgo = new Date()
+    eightDaysAgo.setDate(eightDaysAgo.getDate() - 7)
 
     Promise.all([
       supabase.from('cash_register').select('total_sales').eq('register_date', today),
       supabase.from('appointments').select('*').eq('appointment_date', today).neq('status', 'cancelled').order('appointment_time'),
       supabase.from('products').select('stock, low_stock_alert').eq('business', 'variedades'),
-      supabase.from('cash_register').select('register_date, total_sales').eq('business', 'variedades').gte('register_date', startDate).order('register_date'),
+      supabase.from('sales').select('created_at, total').eq('business', 'variedades').gte('created_at', eightDaysAgo.toISOString()),
       supabase.from('sale_items').select('product_name, quantity, unit_price').limit(500),
-    ]).then(([{ data: cash }, { data: appts }, { data: prods }, { data: week }, { data: items }]) => {
+    ]).then(([{ data: cash }, { data: appts }, { data: prods }, { data: recentSales }, { data: items }]) => {
       setTodaySales((cash ?? []).reduce((s, c) => s + (c.total_sales ?? 0), 0))
       setAppointments((appts ?? []) as Appointment[])
       setLowStock((prods ?? []).filter(p => p.stock <= p.low_stock_alert).length)
 
-      const cashMap: Record<string, number> = {}
-      ;(week ?? []).forEach(r => { cashMap[r.register_date] = r.total_sales })
+      // Agrupar ventas por fecha LOCAL (corrige el bug de UTC)
+      const dayMap: Record<string, number> = {}
+      ;(recentSales ?? []).forEach((s: Pick<Sale, 'created_at' | 'total'>) => {
+        const ld = localDate(new Date(s.created_at))
+        dayMap[ld] = (dayMap[ld] ?? 0) + s.total
+      })
       const days: DayData[] = Array.from({ length: 7 }, (_, i) => {
         const d = new Date()
         d.setDate(d.getDate() - (6 - i))
@@ -68,7 +73,7 @@ export default function Dashboard() {
         return {
           date: dateStr,
           label: d.toLocaleDateString('es-NI', { weekday: 'short' }),
-          total: cashMap[dateStr] ?? 0,
+          total: dayMap[dateStr] ?? 0,
         }
       })
       setWeekData(days)
@@ -143,16 +148,21 @@ export default function Dashboard() {
             {weekData.map(day => {
               const heightPct = (day.total / maxWeek) * 100
               const isToday = day.date === localDate()
+              const hasData = day.total > 0
               return (
-                <div key={day.date} className="flex-1 flex flex-col items-center gap-1">
+                <button
+                  key={day.date}
+                  onClick={() => hasData && navigate(`/variedades/historial?fecha=${day.date}`)}
+                  className={`flex-1 flex flex-col items-center gap-1 ${hasData ? 'active:opacity-70' : 'cursor-default'}`}
+                >
                   <div className="w-full flex flex-col justify-end" style={{ height: '52px' }}>
                     <div
                       className="w-full rounded-t-md transition-all"
                       style={{
-                        height: day.total > 0 ? `${Math.max(heightPct, 8)}%` : '3px',
+                        height: hasData ? `${Math.max(heightPct, 8)}%` : '3px',
                         background: isToday
                           ? 'linear-gradient(180deg, #e97752, #C4614A)'
-                          : day.total > 0
+                          : hasData
                             ? 'linear-gradient(180deg, #D0C4B8, #B0A095)'
                             : '#E8DDD4',
                       }}
@@ -161,7 +171,7 @@ export default function Dashboard() {
                   <span className={`text-[9px] capitalize font-medium ${isToday ? 'text-carmen-600 font-bold' : 'text-gray-400'}`}>
                     {day.label.replace('.', '')}
                   </span>
-                </div>
+                </button>
               )
             })}
           </div>

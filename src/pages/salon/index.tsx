@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { CalendarDays, Users, Scissors, CalendarPlus } from 'lucide-react'
+import { CalendarDays, Users, Scissors, CalendarPlus, BarChart2 } from 'lucide-react'
 import Layout from '../../components/shared/Layout'
 import BigButton from '../../components/shared/BigButton'
 import { useAuth } from '../../context/AuthContext'
@@ -17,6 +17,7 @@ export default function SalonHome() {
           <>
             <BigButton icon={<Scissors size={32} />} label="Servicios" onClick={() => navigate('/salon/servicios')} color="gray" />
             <BigButton icon={<CalendarPlus size={32} />} label="Nueva cita" onClick={() => navigate('/salon/citas')} color="green" />
+            <BigButton icon={<BarChart2 size={32} />} label="Reportes" onClick={() => navigate('/salon/reportes')} color="pink" />
           </>
         )}
       </div>

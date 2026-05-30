@@ -11,6 +11,7 @@ import SalonHome from './pages/salon/index'
 import Appointments from './pages/salon/Appointments'
 import Clients from './pages/salon/Clients'
 import Services from './pages/salon/Services'
+import SalonReports from './pages/salon/SalonReports'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth()
@@ -40,6 +41,7 @@ function AppRoutes() {
       <Route path="/salon/citas" element={<ProtectedRoute><Appointments /></ProtectedRoute>} />
       <Route path="/salon/clientes" element={<ProtectedRoute><Clients /></ProtectedRoute>} />
       <Route path="/salon/servicios" element={<ProtectedRoute><Services /></ProtectedRoute>} />
+      <Route path="/salon/reportes" element={<ProtectedRoute><SalonReports /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )

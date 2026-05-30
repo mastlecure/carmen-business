@@ -17,7 +17,11 @@ export default function SalesHistory() {
       .order('created_at', { ascending: false })
       .limit(60)
       .then(({ data }) => {
-        setSales((data ?? []) as Sale[])
+        const mapped = (data ?? []).map((s: any) => ({
+          ...s,
+          items: s.sale_items ?? [],
+        })) as Sale[]
+        setSales(mapped)
         setLoading(false)
       })
   }, [])

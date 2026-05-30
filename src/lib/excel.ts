@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx'
-import type { Product, Sale } from '../types'
+import type { Product, Sale, Appointment } from '../types'
 
 export function exportInventoryToExcel(products: Product[], filename = 'inventario') {
   const data = products.map(p => ({
@@ -27,5 +27,21 @@ export function exportSalesToExcel(sales: Sale[], filename = 'ventas') {
   const ws = XLSX.utils.json_to_sheet(data)
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, 'Ventas')
+  XLSX.writeFile(wb, `${filename}-${new Date().toISOString().split('T')[0]}.xlsx`)
+}
+
+export function exportAppointmentsToExcel(appointments: Appointment[], filename = 'citas-salon') {
+  const data = appointments.map(a => ({
+    'Fecha': a.appointment_date,
+    'Hora': a.appointment_time,
+    'Cliente': a.client_name,
+    'Servicio': a.service_name,
+    'Precio (C$)': a.service_price,
+    'Estado': { pending: 'Pendiente', confirmed: 'Confirmada', done: 'Realizada', cancelled: 'Cancelada' }[a.status] ?? a.status,
+    'Notas': a.notes ?? '',
+  }))
+  const ws = XLSX.utils.json_to_sheet(data)
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, 'Citas')
   XLSX.writeFile(wb, `${filename}-${new Date().toISOString().split('T')[0]}.xlsx`)
 }

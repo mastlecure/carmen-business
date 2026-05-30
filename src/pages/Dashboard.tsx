@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { TrendingUp, CalendarClock, AlertTriangle, ShoppingBag, Scissors, ChevronRight, Award } from 'lucide-react'
 import Layout from '../components/shared/Layout'
+import AIAssistant from '../components/shared/AIAssistant'
 import { supabase } from '../lib/supabase'
 import { localDate } from '../lib/date'
 import type { Appointment } from '../types'
@@ -89,6 +90,7 @@ export default function Dashboard() {
 
   return (
     <Layout title="Carmen Business">
+      <AIAssistant />
       {/* Saludo */}
       <div className="mb-5">
         <p className="text-sm font-medium text-gray-400 mb-0.5">

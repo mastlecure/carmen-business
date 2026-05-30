@@ -10,6 +10,8 @@ export interface Product {
   stock: number
   business: Business
   low_stock_alert: number
+  barcode?: string
+  image_url?: string
   created_at: string
 }
 

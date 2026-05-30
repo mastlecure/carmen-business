@@ -8,13 +8,13 @@ interface BigButtonProps {
   disabled?: boolean
 }
 
-const styles: Record<string, { border: string; icon: string }> = {
-  pink:   { border: 'border-l-4 border-l-pink-500',   icon: 'text-pink-500' },
-  purple: { border: 'border-l-4 border-l-violet-500', icon: 'text-violet-500' },
-  amber:  { border: 'border-l-4 border-l-amber-500',  icon: 'text-amber-500' },
-  green:  { border: 'border-l-4 border-l-green-500',  icon: 'text-green-600' },
-  red:    { border: 'border-l-4 border-l-red-500',    icon: 'text-red-500' },
-  gray:   { border: 'border-l-4 border-l-gray-400',   icon: 'text-gray-500' },
+const styles: Record<string, { iconBg: string; iconColor: string; accent: string }> = {
+  pink:   { iconBg: 'bg-carmen-100',  iconColor: 'text-carmen-600', accent: 'bg-carmen-500' },
+  purple: { iconBg: 'bg-salon-100',   iconColor: 'text-salon-600',  accent: 'bg-salon-500' },
+  amber:  { iconBg: 'bg-store-100',   iconColor: 'text-store-600',  accent: 'bg-store-500' },
+  green:  { iconBg: 'bg-green-100',   iconColor: 'text-green-700',  accent: 'bg-green-500' },
+  red:    { iconBg: 'bg-red-100',     iconColor: 'text-red-600',    accent: 'bg-red-500' },
+  gray:   { iconBg: 'bg-gray-100',    iconColor: 'text-gray-600',   accent: 'bg-gray-400' },
 }
 
 export default function BigButton({ icon, label, onClick, color = 'pink', disabled }: BigButtonProps) {
@@ -23,19 +23,28 @@ export default function BigButton({ icon, label, onClick, color = 'pink', disabl
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`
-        bg-white ${s.border}
+      className="
+        relative bg-white rounded-2xl overflow-hidden
         flex flex-col items-center justify-center gap-3
-        w-full rounded-2xl py-6 px-4
-        text-center font-semibold text-gray-800 text-base
-        shadow-sm border border-gray-100
-        active:scale-95 transition-transform
+        w-full py-6 px-4 text-center
+        shadow-sm border border-gray-200
+        active:scale-95 active:shadow-none
+        transition-all duration-150
         disabled:opacity-40 disabled:cursor-not-allowed
         min-h-[110px]
-      `}
+        group
+      "
     >
-      <span className={s.icon}>{icon}</span>
-      <span>{label}</span>
+      {/* Accent dot top-right */}
+      <span className={`absolute top-3 right-3 w-1.5 h-1.5 rounded-full ${s.accent} opacity-60`} />
+
+      {/* Icon container */}
+      <span className={`w-14 h-14 ${s.iconBg} rounded-2xl flex items-center justify-center ${s.iconColor} transition-transform group-active:scale-95`}>
+        {icon}
+      </span>
+
+      {/* Label */}
+      <span className="font-semibold text-gray-800 text-sm text-center leading-tight">{label}</span>
     </button>
   )
 }

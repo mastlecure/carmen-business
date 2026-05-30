@@ -7,47 +7,47 @@ interface BarcodeScannerProps {
   onClose: () => void
 }
 
+const CONTAINER_ID = 'cb-scanner-view'
 
 export default function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
   const [error, setError] = useState('')
+  const [closing, setClosing] = useState(false)
   const scannerRef  = useRef<Html5Qrcode | null>(null)
-  const scannedRef  = useRef(false)
-  const containerId = 'cb-scanner-view'
+  const startedRef  = useRef(false)   // start() resolvió exitosamente
+  const stoppingRef = useRef(false)   // stop() ya fue llamado (evita doble stop)
+
+  const stopScanner = async () => {
+    if (stoppingRef.current || !scannerRef.current) return
+    stoppingRef.current = true
+    if (startedRef.current) {
+      try { await scannerRef.current.stop() } catch {}
+    }
+  }
 
   useEffect(() => {
-    const scanner = new Html5Qrcode(containerId, { verbose: false })
+    const scanner = new Html5Qrcode(CONTAINER_ID, { verbose: false })
     scannerRef.current = scanner
 
     scanner
       .start(
         { facingMode: 'environment' },
-        {
-          fps: 10,
-          qrbox: { width: 260, height: 110 },
-          aspectRatio: 1.4,
-        },
+        { fps: 10, qrbox: { width: 260, height: 110 }, aspectRatio: 1.4 },
         (decoded) => {
-          if (scannedRef.current) return
-          scannedRef.current = true
-          scanner.stop().catch(() => {}).finally(() => onScan(decoded))
+          // Código detectado: para el escáner y notifica
+          stopScanner().then(() => onScan(decoded))
         },
         () => {}
       )
-      .catch(() => {
-        setError('No se pudo acceder a la cámara.\nRevisa los permisos del navegador.')
-      })
+      .then(() => { startedRef.current = true })
+      .catch(() => setError('No se pudo acceder a la cámara.\nRevisa los permisos del navegador.'))
 
-    return () => {
-      if (!scannedRef.current) {
-        scanner.stop().catch(() => {})
-      }
-    }
+    // Cleanup solo para el caso en que el componente se desmonte por otra razón
+    return () => { stopScanner() }
   }, [])
 
-  const handleClose = () => {
-    if (!scannedRef.current && scannerRef.current) {
-      scannerRef.current.stop().catch(() => {})
-    }
+  const handleClose = async () => {
+    setClosing(true)
+    await stopScanner()   // ← espera que la cámara pare ANTES de desmontar
     onClose()
   }
 
@@ -63,7 +63,8 @@ export default function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps)
         </div>
         <button
           onClick={handleClose}
-          className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center active:bg-white/20 transition-colors"
+          disabled={closing}
+          className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center active:bg-white/20 transition-colors disabled:opacity-50"
         >
           <X size={20} className="text-white" />
         </button>
@@ -84,20 +85,12 @@ export default function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps)
             </button>
           </div>
         ) : (
-          <>
-            {/* Scanner frame */}
-            <div
-              className="w-full max-w-xs overflow-hidden rounded-2xl"
-              style={{ background: '#000', boxShadow: '0 0 0 1px rgba(255,255,255,0.1), 0 20px 60px rgba(0,0,0,0.8)' }}
-            >
-              <div id={containerId} className="w-full" />
-            </div>
-
-            {/* Corner guides */}
-            <div className="absolute pointer-events-none">
-              {/* decorative — html5-qrcode already draws the viewfinder */}
-            </div>
-          </>
+          <div
+            className="w-full max-w-xs overflow-hidden rounded-2xl"
+            style={{ background: '#000', boxShadow: '0 0 0 1px rgba(255,255,255,0.1), 0 20px 60px rgba(0,0,0,0.8)' }}
+          >
+            <div id={CONTAINER_ID} className="w-full" />
+          </div>
         )}
       </div>
 

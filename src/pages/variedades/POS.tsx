@@ -40,6 +40,14 @@ export default function POS() {
   const [audioMsg, setAudioMsg] = useState('')
   const recognitionRef = useRef<any>(null)
 
+  // Foco automático en el campo de código de barras — listo para escanear
+  // sin tocar la pantalla (útil con terminal/mini PC en el mostrador)
+  useEffect(() => {
+    if (!loading && !success && !showScanner) {
+      barcodeRef.current?.focus()
+    }
+  }, [loading, success, showScanner, selectedCategory])
+
   useEffect(() => {
     if (barcodeMsg) {
       const t = setTimeout(() => setBarcodeMsg(''), 2000)
